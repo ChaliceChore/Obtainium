@@ -131,6 +131,7 @@ ThemeData buildObtainiumTheme(
               overlayColor: focusOverlay(
                 colorScheme.primary.withValues(alpha: 0.5),
               ),
+              side: focusSide,
             ),
           )
         : null,
