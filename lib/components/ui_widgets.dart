@@ -258,14 +258,12 @@ class _TvDropdownMenuState<T> extends State<TvDropdownMenu<T>> {
           listenable: _focusNode,
           builder: (context, child) => DecoratedBox(
             position: DecorationPosition.foreground,
-            decoration: BoxDecoration(
-              border: _focusNode.hasFocus
-                  ? Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 3,
-                    )
-                  : null,
-              borderRadius: BorderRadius.circular(AppRadii.medium),
+            decoration: tvFocusRingDecoration(
+              radius:
+                  TileShape.maybeOf(context) ??
+                  BorderRadius.circular(AppRadii.medium),
+              color: Theme.of(context).colorScheme.primary,
+              width: _focusNode.hasFocus ? 3 : 0,
             ),
             child: child,
           ),
@@ -512,14 +510,20 @@ class DownloadCancelButton extends StatelessWidget {
 /// anywhere in their subtree. Does nothing on non-TV devices.
 class TvFocusRing extends StatefulWidget {
   final Widget child;
-  final double borderRadius;
+
+  /// Uniform corner radius. Leave [borderRadius] and [radius] null to follow
+  /// the enclosing [CardTile]'s (positional) shape, so the ring always traces
+  /// the tile's real corners.
+  final double? borderRadius;
+  final BorderRadius? radius;
   final double width;
   final Color? color;
 
   const TvFocusRing({
     super.key,
     required this.child,
-    this.borderRadius = connectedTileBigRadius,
+    this.borderRadius,
+    this.radius,
     this.width = 3,
     this.color,
   });
@@ -536,6 +540,12 @@ class _TvFocusRingState extends State<TvFocusRing> {
     final isTV = context.select<SettingsProvider, bool>((p) => p.isTV);
     if (!isTV) return widget.child;
     final color = widget.color ?? Theme.of(context).colorScheme.primary;
+    final radius =
+        widget.radius ??
+        (widget.borderRadius != null
+            ? BorderRadius.circular(widget.borderRadius!)
+            : TileShape.maybeOf(context) ??
+                  BorderRadius.circular(connectedTileBigRadius));
     return Focus(
       canRequestFocus: false,
       skipTraversal: true,
@@ -545,16 +555,54 @@ class _TvFocusRingState extends State<TvFocusRing> {
       },
       child: DecoratedBox(
         position: DecorationPosition.foreground,
-        decoration: BoxDecoration(
-          border: _focused
-              ? Border.all(color: color, width: widget.width)
-              : null,
-          borderRadius: BorderRadius.circular(widget.borderRadius),
+        decoration: tvFocusRingDecoration(
+          radius: radius,
+          color: color,
+          width: _focused ? widget.width : 0,
         ),
         child: widget.child,
       ),
     );
   }
+}
+
+/// The TV focus outline, drawn with the same superellipse as [CardTile] so it
+/// traces tile corners exactly. Pass [circular] to match a circular-cornered
+/// shape instead (e.g. an [OutlineInputBorder]). A zero [width] draws nothing.
+ShapeDecoration tvFocusRingDecoration({
+  required BorderRadius radius,
+  required Color color,
+  double width = 3,
+  bool circular = false,
+}) {
+  final side = width > 0
+      ? BorderSide(color: color, width: width)
+      : BorderSide.none;
+  return ShapeDecoration(
+    shape: circular
+        ? RoundedRectangleBorder(borderRadius: radius, side: side)
+        : RoundedSuperellipseBorder(borderRadius: radius, side: side),
+  );
+}
+
+/// Publishes a [CardTile]'s corner radii to its descendants, so focus rings and
+/// list-tile ink inside it use the tile's actual (positional) shape instead of
+/// a fixed radius that rounds joined corners or under-rounds outer ones.
+class TileShape extends InheritedWidget {
+  final BorderRadius borderRadius;
+
+  const TileShape({
+    super.key,
+    required this.borderRadius,
+    required super.child,
+  });
+
+  static BorderRadius? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<TileShape>()?.borderRadius;
+
+  @override
+  bool updateShouldNotify(TileShape oldWidget) =>
+      borderRadius != oldWidget.borderRadius;
 }
 
 class ConnectedCard extends StatelessWidget {
@@ -640,14 +688,14 @@ class ActionListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TvFocusRing(
-      borderRadius: borderRadius?.topLeft.x ?? connectedTileBigRadius,
+      radius: borderRadius,
       child: ListTile(
         leading: Icon(icon),
         title: Text(label),
         trailing: trailing,
         enabled: onTap != null,
         shape: borderRadius != null
-            ? RoundedRectangleBorder(borderRadius: borderRadius!)
+            ? RoundedSuperellipseBorder(borderRadius: borderRadius!)
             : null,
         onTap: onTap == null
             ? null
@@ -856,7 +904,13 @@ class CardTile extends StatelessWidget {
       clipper: _TileClipper(shape),
       child: Material(
         color: color ?? Theme.of(context).colorScheme.surfaceContainerLow,
-        child: Padding(padding: padding, child: child),
+        child: TileShape(
+          borderRadius: effectiveRadius,
+          child: ListTileTheme.merge(
+            shape: shape,
+            child: Padding(padding: padding, child: child),
+          ),
+        ),
       ),
     );
   }

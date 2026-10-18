@@ -590,8 +590,9 @@ class AppListTile extends StatelessWidget {
                   : tile;
               if (settingsProvider.isTV) {
                 return TvFocusRing(
-                  borderRadius:
-                      borderRadius?.topLeft.x ?? connectedTileBigRadius,
+                  radius:
+                      borderRadius ??
+                      BorderRadius.circular(connectedTileBigRadius),
                   child: Row(
                     children: [
                       if (selectionMode)

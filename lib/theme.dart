@@ -125,7 +125,13 @@ ThemeData buildObtainiumTheme(
     ),
     listTileTheme: ListTileThemeData(shape: fieldShape),
     chipTheme: const ChipThemeData(shape: StadiumBorder()),
-    focusColor: isTV ? colorScheme.primary.withValues(alpha: 0.4) : null,
+    // Focused rows also get a TvFocusRing outline, so the fill only needs to
+    // be a light wash; a heavy tint reads as muddy on light surfaces.
+    focusColor: isTV
+        ? colorScheme.primary.withValues(
+            alpha: colorScheme.brightness == Brightness.light ? 0.16 : 0.4,
+          )
+        : null,
     iconButtonTheme: isTV
         ? IconButtonThemeData(
             style: ButtonStyle(

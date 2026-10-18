@@ -1287,16 +1287,6 @@ class AppsPageState extends State<AppsPage> {
       },
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        bottomNavigationBar: settingsProvider.isTV
-            ? _TvAppListFooter(
-                selectionMode: _selectionMode,
-                selectedCount: selectedAppIds.length,
-                onAddApp: () => NavHelper.pushAddAppPage(context),
-                onSelectedActions: selectedAppIds.isEmpty
-                    ? null
-                    : () => showSelectedAppActions(),
-              )
-            : null,
         body: GestureDetector(
           behavior: HitTestBehavior.translucent,
           onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
@@ -1313,6 +1303,29 @@ class AppsPageState extends State<AppsPage> {
                   CustomAppBar(
                     title: tr('appsString'),
                     actions: [
+                      // On TV, Add app (or Actions while selecting) lives in
+                      // the pinned bar: a footer below the list is only
+                      // reachable by D-padding through every app (#3351).
+                      if (settingsProvider.isTV) ...[
+                        _selectionMode
+                            ? FilledButton.icon(
+                                onPressed: selectedAppIds.isEmpty
+                                    ? null
+                                    : () => showSelectedAppActions(),
+                                icon: const Icon(Icons.more_vert),
+                                label: Text(
+                                  '${plural('action', 2)} '
+                                  '(${selectedAppIds.length})',
+                                ),
+                              )
+                            : FilledButton.tonalIcon(
+                                onPressed: () =>
+                                    NavHelper.pushAddAppPage(context),
+                                icon: const Icon(Icons.add),
+                                label: Text(tr('addApp')),
+                              ),
+                        const SizedBox(width: AppSpacings.sm),
+                      ],
                       if (settingsProvider.isTV)
                         IconButton(
                           onPressed: toggleSelectionMode,
@@ -1365,9 +1378,7 @@ class AppsPageState extends State<AppsPage> {
                   ),
                   SliverToBoxAdapter(
                     child: SizedBox(
-                      height:
-                          MediaQuery.of(context).padding.bottom +
-                          (settingsProvider.isTV ? 160 : 96),
+                      height: MediaQuery.of(context).padding.bottom + 96,
                     ),
                   ),
                 ],
@@ -1653,6 +1664,11 @@ class _TVSearchBar extends StatefulWidget {
 }
 
 class _TVSearchBarState extends State<_TVSearchBar> {
+  static const _searchBorder = OutlineInputBorder(
+    borderSide: BorderSide.none,
+    borderRadius: BorderRadius.all(Radius.circular(AppRadii.xlarge)),
+  );
+
   final FocusNode _textFocus = FocusNode();
 
   @override
@@ -1672,12 +1688,15 @@ class _TVSearchBarState extends State<_TVSearchBar> {
             focusNode: _textFocus,
             controller: widget.controller,
             onChanged: widget.onChanged,
+            // The theme sets enabled/focused borders to none, which would
+            // fill the field as a sharp rectangle under a rounded focus ring.
+            // Restate every border so the fill is the same pill shape.
             decoration: InputDecoration(
               hintText: widget.hintText,
               prefixIcon: const Icon(Icons.search_rounded),
-              border: const OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(28)),
-              ),
+              border: _searchBorder,
+              enabledBorder: _searchBorder,
+              focusedBorder: _searchBorder,
             ),
           ),
         ),
@@ -1687,54 +1706,6 @@ class _TVSearchBarState extends State<_TVSearchBar> {
           children: widget.trailing,
         ),
       ],
-    );
-  }
-}
-
-/// Always-visible footer for the TV app list: keeps the Add app (and
-/// selection Actions) buttons reachable without scrolling to the end of the
-/// list (#3351).
-class _TvAppListFooter extends StatelessWidget {
-  const _TvAppListFooter({
-    required this.selectionMode,
-    required this.selectedCount,
-    required this.onAddApp,
-    required this.onSelectedActions,
-  });
-
-  final bool selectionMode;
-  final int selectedCount;
-  final VoidCallback onAddApp;
-  final VoidCallback? onSelectedActions;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            spacing: AppSpacings.elementGap,
-            children: [
-              if (selectionMode)
-                FilledButton.icon(
-                  onPressed: onSelectedActions,
-                  icon: const Icon(Icons.more_vert),
-                  label: Text('${plural('action', 2)} ($selectedCount)'),
-                ),
-              FilledButton.tonalIcon(
-                onPressed: onAddApp,
-                icon: const Icon(Icons.add),
-                label: Text(tr('addApp')),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

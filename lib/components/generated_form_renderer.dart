@@ -154,15 +154,16 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
         child: ListenableBuilder(
           listenable: _outerFocus,
           builder: (context, child) => Container(
-            decoration: _outerFocus.hasFocus && !_activated
-                ? BoxDecoration(
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    ),
-                    borderRadius: BorderRadius.circular(widget.borderRadius),
-                  )
-                : null,
+            foregroundDecoration: tvFocusRingDecoration(
+              radius:
+                  TileShape.maybeOf(context) ??
+                  BorderRadius.circular(widget.borderRadius),
+              color: Theme.of(context).colorScheme.primary,
+              width: _outerFocus.hasFocus && !_activated ? 3 : 0,
+              // Outside a tile the field's own (circular) input border is the
+              // shape to trace.
+              circular: TileShape.maybeOf(context) == null,
+            ),
             child: ExcludeFocus(excluding: !_activated, child: widget.child),
           ),
         ),
@@ -320,7 +321,8 @@ class _GeneratedFormState extends State<GeneratedForm> {
       return Text(tr('dropdownNoOptsError'));
     }
     return TvFocusRing(
-      borderRadius: AppRadii.medium,
+      radius:
+          TileShape.maybeOf(context) ?? BorderRadius.circular(AppRadii.medium),
       child: DropdownButtonFormField(
         decoration: _fieldDecoration(
           labelText: tr(formItem.label) + (formItem.required ? ' *' : ''),

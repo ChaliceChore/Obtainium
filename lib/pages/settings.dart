@@ -476,7 +476,6 @@ class _SettingsPageState extends State<SettingsPage> {
     return CardTile(
       padding: EdgeInsets.zero,
       child: TvFocusRing(
-        borderRadius: AppRadii.small,
         child: ListTile(
           autofocus: autofocus,
           contentPadding: AppPaddings.rowHorizontal,
@@ -492,9 +491,6 @@ class _SettingsPageState extends State<SettingsPage> {
             context.read<SettingsProvider>().selectionClick();
             onTap();
           },
-          shape: RoundedSuperellipseBorder(
-            borderRadius: BorderRadius.circular(AppRadii.small),
-          ),
         ),
       ),
     );
@@ -919,37 +915,47 @@ class _SettingsPageState extends State<SettingsPage> {
       if (settingsProvider.colourSchemeMode != ColourSchemeMode.materialYou)
         // Colour picker as CardTile so shapeCardTiles finds it.
         CardTile(
-          child: ListTile(
-            contentPadding: EdgeInsets.zero,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(connectedTileBigRadius),
-            ),
-            title: Text(
-              tr('selectX', args: [lowerCaseUnlessLang(tr('colour'), 'de')]),
-            ),
-            subtitle: Text(_themeColourLabel(settingsProvider.themeColor)),
-            trailing: TvFocusRing(
-              borderRadius: 20,
-              child: ColorIndicator(
+          padding: EdgeInsets.zero,
+          child: Builder(
+            builder: (context) {
+              final isTV = settingsProvider.isTV;
+              Future<void> pickColour() async {
+                final colorBeforeDialog = settingsProvider.themeColor;
+                if (!(await showColorPickerDialog(
+                  settingsProvider,
+                  obtainiumThemeColor.toSwatch(),
+                ))) {
+                  handleColorPickerCancel(colorBeforeDialog, settingsProvider);
+                }
+              }
+
+              final swatch = ColorIndicator(
                 width: 40,
                 height: 40,
                 borderRadius: 20,
                 color: settingsProvider.themeColor,
                 onSelectFocus: false,
-                onSelect: () async {
-                  final colorBeforeDialog = settingsProvider.themeColor;
-                  if (!(await showColorPickerDialog(
-                    settingsProvider,
-                    obtainiumThemeColor.toSwatch(),
-                  ))) {
-                    handleColorPickerCancel(
-                      colorBeforeDialog,
-                      settingsProvider,
-                    );
-                  }
-                },
-              ),
-            ),
+                onSelect: pickColour,
+              );
+              // On TV the whole row is the focus target (like the other
+              // settings rows) rather than just the small swatch.
+              return TvFocusRing(
+                child: ListTile(
+                  contentPadding: AppPaddings.rowHorizontal,
+                  title: Text(
+                    tr(
+                      'selectX',
+                      args: [lowerCaseUnlessLang(tr('colour'), 'de')],
+                    ),
+                  ),
+                  subtitle: Text(
+                    _themeColourLabel(settingsProvider.themeColor),
+                  ),
+                  onTap: isTV ? pickColour : null,
+                  trailing: isTV ? ExcludeFocus(child: swatch) : swatch,
+                ),
+              );
+            },
           ),
         ),
       _fieldTile(context, sortDropdown),

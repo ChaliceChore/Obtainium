@@ -383,7 +383,7 @@ class _HomePageState extends State<HomePage> {
       (p) => p.loadingApps,
     );
 
-    // On TV the add-app and actions affordances live in the list itself (a
+    // On TV the add-app and actions affordances live in the app bar (a
     // FAB would overlap the tiles and is awkward to reach with a remote).
     final Widget? fab = isTV
         ? null
