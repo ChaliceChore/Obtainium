@@ -125,6 +125,21 @@ class _TvTextFieldFocusState extends State<TvTextFieldFocus> {
       child: Focus(
         focusNode: _outerFocus,
         onKeyEvent: (node, event) {
+          // TV keyboards consume the first Back press to hide themselves, so
+          // the PopScope above never fires and the field would keep swallowing
+          // D-pad keys. Treat Up/Down while editing as "leave the field".
+          if (_activated &&
+              event is KeyDownEvent &&
+              (event.logicalKey == LogicalKeyboardKey.arrowUp ||
+                  event.logicalKey == LogicalKeyboardKey.arrowDown)) {
+            final direction = event.logicalKey == LogicalKeyboardKey.arrowUp
+                ? TraversalDirection.up
+                : TraversalDirection.down;
+            setState(() => _activated = false);
+            _outerFocus.requestFocus();
+            _outerFocus.focusInDirection(direction);
+            return KeyEventResult.handled;
+          }
           if (event is KeyDownEvent &&
               (event.logicalKey == LogicalKeyboardKey.select ||
                   event.logicalKey == LogicalKeyboardKey.enter)) {

@@ -902,11 +902,32 @@ class ToggleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // On TV the whole row is the focus target: if only the small switch at the
+    // far right were focusable, geometric D-pad traversal would skip it in
+    // favour of full-width neighbours.
+    final isTV = context.read<SettingsProvider>().isTV;
+    final switchControl = Semantics(
+      container: true,
+      label: label,
+      toggled: value,
+      enabled: onChanged != null,
+      excludeSemantics: true,
+      onTap: onChanged == null ? null : () => onChanged!(!value),
+      child: Switch(
+        value: value,
+        onChanged: onChanged == null
+            ? null
+            : hapticSwitchOnChanged(context, onChanged!),
+      ),
+    );
     return TvFocusRing(
       child: ListTile(
         contentPadding: noPadding ? EdgeInsets.zero : AppPaddings.rowHorizontal,
         title: Text(label),
         subtitle: subtitle,
+        onTap: isTV && onChanged != null
+            ? () => hapticSwitchOnChanged(context, onChanged!)(!value)
+            : null,
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -917,20 +938,7 @@ class ToggleTile extends StatelessWidget {
                 onPressed: () =>
                     showHelpDialog(context, title: label, content: helpWidgets),
               ),
-            Semantics(
-              container: true,
-              label: label,
-              toggled: value,
-              enabled: onChanged != null,
-              excludeSemantics: true,
-              onTap: onChanged == null ? null : () => onChanged!(!value),
-              child: Switch(
-                value: value,
-                onChanged: onChanged == null
-                    ? null
-                    : hapticSwitchOnChanged(context, onChanged!),
-              ),
-            ),
+            isTV ? ExcludeFocus(child: switchControl) : switchControl,
           ],
         ),
       ),

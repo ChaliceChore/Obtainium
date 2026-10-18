@@ -873,7 +873,14 @@ class AppsPageState extends State<AppsPage> {
       borderRadius: borderRadius,
       multiSelected: selectedAppIds.contains(app.id),
       detailSelected: widget.selectedAppId == app.id,
-      autofocus: autofocus && settingsProvider.isTV,
+      // Never autofocus from behind a dialog: a tile that appears while one is
+      // open (e.g. Obtainium adding itself on first run under the welcome
+      // dialog) would otherwise steal focus and the remote would act on the
+      // list instead of the dialog.
+      autofocus:
+          autofocus &&
+          settingsProvider.isTV &&
+          (ModalRoute.isCurrentOf(context) ?? true),
       selectionMode: _selectionMode,
       onToggleSelected: () => toggleAppSelected(app),
       onTap: () {

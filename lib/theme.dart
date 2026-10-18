@@ -40,16 +40,38 @@ ThemeData buildObtainiumTheme(
     });
   }
 
+  // A tinted overlay alone disappears on some fills (e.g. a white overlay on a
+  // light tonal button), so focused buttons also get a high-contrast outline.
+  final WidgetStateProperty<BorderSide?>? focusSide = isTV
+      ? WidgetStateProperty.resolveWith<BorderSide?>(
+          (states) => states.contains(WidgetState.focused)
+              ? BorderSide(color: colorScheme.onSurface, width: 3)
+              : null,
+        )
+      : null;
+
   final pillButtonStyle = ButtonStyle(
     shape: const WidgetStatePropertyAll(buttonShape),
     minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
     overlayColor: focusOverlay(colorScheme.primary.withValues(alpha: 0.4)),
+    side: focusSide,
   );
 
   final tvTonalButtonStyle = ButtonStyle(
     shape: const WidgetStatePropertyAll(buttonShape),
     minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
     overlayColor: focusOverlay(colorScheme.onPrimary.withValues(alpha: 0.4)),
+    side: focusSide,
+  );
+
+  final tvSegmentForeground = WidgetStateProperty.resolveWith<Color?>(
+    (states) => states.contains(WidgetState.disabled)
+        ? colorScheme.onSurface.withValues(alpha: 0.38)
+        : states.contains(WidgetState.focused)
+        ? colorScheme.onPrimary
+        : states.contains(WidgetState.selected)
+        ? colorScheme.onSecondaryContainer
+        : colorScheme.onSurface,
   );
 
   const inputDecoration = InputDecorationThemeData(
@@ -136,9 +158,25 @@ ThemeData buildObtainiumTheme(
         : null,
     segmentedButtonTheme: isTV
         ? SegmentedButtonThemeData(
+            // The selected segment is already tinted, so a focus tint alone
+            // looks identical to "selected". Fill the focused segment solid
+            // primary instead so focus and selection are always distinct.
+            // These properties replace the M3 defaults wholesale, so the
+            // unfocused selected/unselected colours are restated here.
             style: ButtonStyle(
-              overlayColor: focusOverlay(
-                colorScheme.primary.withValues(alpha: 0.45),
+              backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                (states) => states.contains(WidgetState.focused)
+                    ? colorScheme.primary
+                    : states.contains(WidgetState.selected)
+                    ? colorScheme.secondaryContainer
+                    : Colors.transparent,
+              ),
+              foregroundColor: tvSegmentForeground,
+              iconColor: tvSegmentForeground,
+              overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                (states) => states.contains(WidgetState.focused)
+                    ? Colors.transparent
+                    : null,
               ),
             ),
           )

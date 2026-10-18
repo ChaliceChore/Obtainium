@@ -118,6 +118,9 @@ void main() async {
   };
 
   final settingsProvider = SettingsProvider();
+  // Load settings before the first frame: HomePage shows its welcome dialogs
+  // in a post-frame callback and needs prefs and isTV (for D-pad autofocus).
+  await settingsProvider.initializeSettings();
   final sourceProvider = SourceProvider();
   final appsProvider = AppsProvider(settingsProvider: settingsProvider);
   final np = NotificationsProvider();
