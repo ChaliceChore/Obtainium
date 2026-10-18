@@ -57,13 +57,6 @@ ThemeData buildObtainiumTheme(
     side: focusSide,
   );
 
-  final tvTonalButtonStyle = ButtonStyle(
-    shape: const WidgetStatePropertyAll(buttonShape),
-    minimumSize: const WidgetStatePropertyAll(Size(0, 48)),
-    overlayColor: focusOverlay(colorScheme.onPrimary.withValues(alpha: 0.4)),
-    side: focusSide,
-  );
-
   final tvSegmentForeground = WidgetStateProperty.resolveWith<Color?>(
     (states) => states.contains(WidgetState.disabled)
         ? colorScheme.onSurface.withValues(alpha: 0.38)
@@ -199,7 +192,9 @@ ThemeData buildObtainiumTheme(
     searchBarTheme: const SearchBarThemeData(
       elevation: WidgetStatePropertyAll(0),
     ),
-    filledButtonTheme: FilledButtonThemeData(style: tvTonalButtonStyle),
+    // Same focus tint as text/outlined/icon buttons. On a solid filled
+    // button the tint blends in, so the focus outline carries focus there.
+    filledButtonTheme: FilledButtonThemeData(style: pillButtonStyle),
     elevatedButtonTheme: ElevatedButtonThemeData(style: pillButtonStyle),
     outlinedButtonTheme: OutlinedButtonThemeData(style: pillButtonStyle),
     textButtonTheme: TextButtonThemeData(style: pillButtonStyle),

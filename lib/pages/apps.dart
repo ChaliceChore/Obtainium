@@ -22,6 +22,15 @@ import 'package:obtainium/utils/nav_helper.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+/// Slimmer than the 48dp theme default so the labelled button sits visually
+/// in line with the 24dp app-bar icons.
+const _tvAppBarButtonStyle = ButtonStyle(
+  minimumSize: WidgetStatePropertyAll(Size(0, 40)),
+  padding: WidgetStatePropertyAll(
+    EdgeInsets.symmetric(horizontal: AppSpacings.lg),
+  ),
+);
+
 class AppsPage extends StatefulWidget {
   const AppsPage({
     super.key,
@@ -1309,6 +1318,7 @@ class AppsPageState extends State<AppsPage> {
                       if (settingsProvider.isTV) ...[
                         _selectionMode
                             ? FilledButton.icon(
+                                style: _tvAppBarButtonStyle,
                                 onPressed: selectedAppIds.isEmpty
                                     ? null
                                     : () => showSelectedAppActions(),
@@ -1319,6 +1329,7 @@ class AppsPageState extends State<AppsPage> {
                                 ),
                               )
                             : FilledButton.tonalIcon(
+                                style: _tvAppBarButtonStyle,
                                 onPressed: () =>
                                     NavHelper.pushAddAppPage(context),
                                 icon: const Icon(Icons.add),

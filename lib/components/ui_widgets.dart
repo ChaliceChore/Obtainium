@@ -723,6 +723,11 @@ class CustomAppBar extends StatelessWidget {
       automaticallyImplyLeading: true,
       title: Text(title),
       actions: actions,
+      // M3 gives actions no trailing inset, so the last icon touched the edge
+      // (or the two-pane divider on TV). Inset it like the 16dp page content.
+      actionsPadding: context.select<SettingsProvider, bool>((p) => p.isTV)
+          ? const EdgeInsets.only(right: AppSpacings.lg)
+          : null,
     );
   }
 }
